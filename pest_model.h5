@@ -1,0 +1,803 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "provenance": [],
+      "authorship_tag": "ABX9TyNXkAJUhYCWb6b4gvYOwKEl",
+      "include_colab_link": true
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/karthika8712-droid/insect-pest-identification/blob/main/pest_model.h5\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 1,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "BSxzbhsODV2E",
+        "outputId": "c5e4dd8e-a173-4d89-d223-e5aaad295c31"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Requirement already satisfied: tensorflow in /usr/local/lib/python3.12/dist-packages (2.19.0)\n",
+            "Requirement already satisfied: matplotlib in /usr/local/lib/python3.12/dist-packages (3.10.0)\n",
+            "Requirement already satisfied: absl-py>=1.0.0 in /usr/local/lib/python3.12/dist-packages (from tensorflow) (1.4.0)\n",
+            "Requirement already satisfied: astunparse>=1.6.0 in /usr/local/lib/python3.12/dist-packages (from tensorflow) (1.6.3)\n",
+            "Requirement already satisfied: flatbuffers>=24.3.25 in /usr/local/lib/python3.12/dist-packages (from tensorflow) (25.12.19)\n",
+            "Requirement already satisfied: gast!=0.5.0,!=0.5.1,!=0.5.2,>=0.2.1 in /usr/local/lib/python3.12/dist-packages (from tensorflow) (0.7.0)\n",
+            "Requirement already satisfied: google-pasta>=0.1.1 in /usr/local/lib/python3.12/dist-packages (from tensorflow) (0.2.0)\n",
+            "Requirement already satisfied: libclang>=13.0.0 in /usr/local/lib/python3.12/dist-packages (from tensorflow) (18.1.1)\n",
+            "Requirement already satisfied: opt-einsum>=2.3.2 in /usr/local/lib/python3.12/dist-packages (from tensorflow) (3.4.0)\n",
+            "Requirement already satisfied: packaging in /usr/local/lib/python3.12/dist-packages (from tensorflow) (26.0)\n",
+            "Requirement already satisfied: protobuf!=4.21.0,!=4.21.1,!=4.21.2,!=4.21.3,!=4.21.4,!=4.21.5,<6.0.0dev,>=3.20.3 in /usr/local/lib/python3.12/dist-packages (from tensorflow) (5.29.6)\n",
+            "Requirement already satisfied: requests<3,>=2.21.0 in /usr/local/lib/python3.12/dist-packages (from tensorflow) (2.32.4)\n",
+            "Requirement already satisfied: setuptools in /usr/local/lib/python3.12/dist-packages (from tensorflow) (75.2.0)\n",
+            "Requirement already satisfied: six>=1.12.0 in /usr/local/lib/python3.12/dist-packages (from tensorflow) (1.17.0)\n",
+            "Requirement already satisfied: termcolor>=1.1.0 in /usr/local/lib/python3.12/dist-packages (from tensorflow) (3.3.0)\n",
+            "Requirement already satisfied: typing-extensions>=3.6.6 in /usr/local/lib/python3.12/dist-packages (from tensorflow) (4.15.0)\n",
+            "Requirement already satisfied: wrapt>=1.11.0 in /usr/local/lib/python3.12/dist-packages (from tensorflow) (2.1.1)\n",
+            "Requirement already satisfied: grpcio<2.0,>=1.24.3 in /usr/local/lib/python3.12/dist-packages (from tensorflow) (1.78.1)\n",
+            "Requirement already satisfied: tensorboard~=2.19.0 in /usr/local/lib/python3.12/dist-packages (from tensorflow) (2.19.0)\n",
+            "Requirement already satisfied: keras>=3.5.0 in /usr/local/lib/python3.12/dist-packages (from tensorflow) (3.10.0)\n",
+            "Requirement already satisfied: numpy<2.2.0,>=1.26.0 in /usr/local/lib/python3.12/dist-packages (from tensorflow) (2.0.2)\n",
+            "Requirement already satisfied: h5py>=3.11.0 in /usr/local/lib/python3.12/dist-packages (from tensorflow) (3.15.1)\n",
+            "Requirement already satisfied: ml-dtypes<1.0.0,>=0.5.1 in /usr/local/lib/python3.12/dist-packages (from tensorflow) (0.5.4)\n",
+            "Requirement already satisfied: contourpy>=1.0.1 in /usr/local/lib/python3.12/dist-packages (from matplotlib) (1.3.3)\n",
+            "Requirement already satisfied: cycler>=0.10 in /usr/local/lib/python3.12/dist-packages (from matplotlib) (0.12.1)\n",
+            "Requirement already satisfied: fonttools>=4.22.0 in /usr/local/lib/python3.12/dist-packages (from matplotlib) (4.61.1)\n",
+            "Requirement already satisfied: kiwisolver>=1.3.1 in /usr/local/lib/python3.12/dist-packages (from matplotlib) (1.4.9)\n",
+            "Requirement already satisfied: pillow>=8 in /usr/local/lib/python3.12/dist-packages (from matplotlib) (11.3.0)\n",
+            "Requirement already satisfied: pyparsing>=2.3.1 in /usr/local/lib/python3.12/dist-packages (from matplotlib) (3.3.2)\n",
+            "Requirement already satisfied: python-dateutil>=2.7 in /usr/local/lib/python3.12/dist-packages (from matplotlib) (2.9.0.post0)\n",
+            "Requirement already satisfied: wheel<1.0,>=0.23.0 in /usr/local/lib/python3.12/dist-packages (from astunparse>=1.6.0->tensorflow) (0.46.3)\n",
+            "Requirement already satisfied: rich in /usr/local/lib/python3.12/dist-packages (from keras>=3.5.0->tensorflow) (13.9.4)\n",
+            "Requirement already satisfied: namex in /usr/local/lib/python3.12/dist-packages (from keras>=3.5.0->tensorflow) (0.1.0)\n",
+            "Requirement already satisfied: optree in /usr/local/lib/python3.12/dist-packages (from keras>=3.5.0->tensorflow) (0.19.0)\n",
+            "Requirement already satisfied: charset_normalizer<4,>=2 in /usr/local/lib/python3.12/dist-packages (from requests<3,>=2.21.0->tensorflow) (3.4.4)\n",
+            "Requirement already satisfied: idna<4,>=2.5 in /usr/local/lib/python3.12/dist-packages (from requests<3,>=2.21.0->tensorflow) (3.11)\n",
+            "Requirement already satisfied: urllib3<3,>=1.21.1 in /usr/local/lib/python3.12/dist-packages (from requests<3,>=2.21.0->tensorflow) (2.5.0)\n",
+            "Requirement already satisfied: certifi>=2017.4.17 in /usr/local/lib/python3.12/dist-packages (from requests<3,>=2.21.0->tensorflow) (2026.1.4)\n",
+            "Requirement already satisfied: markdown>=2.6.8 in /usr/local/lib/python3.12/dist-packages (from tensorboard~=2.19.0->tensorflow) (3.10.2)\n",
+            "Requirement already satisfied: tensorboard-data-server<0.8.0,>=0.7.0 in /usr/local/lib/python3.12/dist-packages (from tensorboard~=2.19.0->tensorflow) (0.7.2)\n",
+            "Requirement already satisfied: werkzeug>=1.0.1 in /usr/local/lib/python3.12/dist-packages (from tensorboard~=2.19.0->tensorflow) (3.1.6)\n",
+            "Requirement already satisfied: markupsafe>=2.1.1 in /usr/local/lib/python3.12/dist-packages (from werkzeug>=1.0.1->tensorboard~=2.19.0->tensorflow) (3.0.3)\n",
+            "Requirement already satisfied: markdown-it-py>=2.2.0 in /usr/local/lib/python3.12/dist-packages (from rich->keras>=3.5.0->tensorflow) (4.0.0)\n",
+            "Requirement already satisfied: pygments<3.0.0,>=2.13.0 in /usr/local/lib/python3.12/dist-packages (from rich->keras>=3.5.0->tensorflow) (2.19.2)\n",
+            "Requirement already satisfied: mdurl~=0.1 in /usr/local/lib/python3.12/dist-packages (from markdown-it-py>=2.2.0->rich->keras>=3.5.0->tensorflow) (0.1.2)\n"
+          ]
+        }
+      ],
+      "source": [
+        "# Install required libraries (if needed)\n",
+        "!pip install tensorflow matplotlib\n",
+        "\n",
+        "# Import libraries\n",
+        "import tensorflow as tf\n",
+        "from tensorflow.keras import layers, models\n",
+        "from tensorflow.keras.preprocessing import image_dataset_from_directory\n",
+        "from tensorflow.keras.applications import MobileNetV2\n",
+        "from tensorflow.keras.applications.mobilenet_v2 import preprocess_input\n",
+        "import matplotlib.pyplot as plt\n",
+        "import numpy as np\n",
+        "import os"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from google.colab import files\n",
+        "uploaded = files.upload()"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 73
+        },
+        "id": "khlC1trpDgR3",
+        "outputId": "534d8840-f044-4f59-d232-06124bdb7574"
+      },
+      "execution_count": 2,
+      "outputs": [
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": [
+              "<IPython.core.display.HTML object>"
+            ],
+            "text/html": [
+              "\n",
+              "     <input type=\"file\" id=\"files-7210c978-8ae0-4f9f-a96f-21af9ded1aef\" name=\"files[]\" multiple disabled\n",
+              "        style=\"border:none\" />\n",
+              "     <output id=\"result-7210c978-8ae0-4f9f-a96f-21af9ded1aef\">\n",
+              "      Upload widget is only available when the cell has been executed in the\n",
+              "      current browser session. Please rerun this cell to enable.\n",
+              "      </output>\n",
+              "      <script>// Copyright 2017 Google LLC\n",
+              "//\n",
+              "// Licensed under the Apache License, Version 2.0 (the \"License\");\n",
+              "// you may not use this file except in compliance with the License.\n",
+              "// You may obtain a copy of the License at\n",
+              "//\n",
+              "//      http://www.apache.org/licenses/LICENSE-2.0\n",
+              "//\n",
+              "// Unless required by applicable law or agreed to in writing, software\n",
+              "// distributed under the License is distributed on an \"AS IS\" BASIS,\n",
+              "// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n",
+              "// See the License for the specific language governing permissions and\n",
+              "// limitations under the License.\n",
+              "\n",
+              "/**\n",
+              " * @fileoverview Helpers for google.colab Python module.\n",
+              " */\n",
+              "(function(scope) {\n",
+              "function span(text, styleAttributes = {}) {\n",
+              "  const element = document.createElement('span');\n",
+              "  element.textContent = text;\n",
+              "  for (const key of Object.keys(styleAttributes)) {\n",
+              "    element.style[key] = styleAttributes[key];\n",
+              "  }\n",
+              "  return element;\n",
+              "}\n",
+              "\n",
+              "// Max number of bytes which will be uploaded at a time.\n",
+              "const MAX_PAYLOAD_SIZE = 100 * 1024;\n",
+              "\n",
+              "function _uploadFiles(inputId, outputId) {\n",
+              "  const steps = uploadFilesStep(inputId, outputId);\n",
+              "  const outputElement = document.getElementById(outputId);\n",
+              "  // Cache steps on the outputElement to make it available for the next call\n",
+              "  // to uploadFilesContinue from Python.\n",
+              "  outputElement.steps = steps;\n",
+              "\n",
+              "  return _uploadFilesContinue(outputId);\n",
+              "}\n",
+              "\n",
+              "// This is roughly an async generator (not supported in the browser yet),\n",
+              "// where there are multiple asynchronous steps and the Python side is going\n",
+              "// to poll for completion of each step.\n",
+              "// This uses a Promise to block the python side on completion of each step,\n",
+              "// then passes the result of the previous step as the input to the next step.\n",
+              "function _uploadFilesContinue(outputId) {\n",
+              "  const outputElement = document.getElementById(outputId);\n",
+              "  const steps = outputElement.steps;\n",
+              "\n",
+              "  const next = steps.next(outputElement.lastPromiseValue);\n",
+              "  return Promise.resolve(next.value.promise).then((value) => {\n",
+              "    // Cache the last promise value to make it available to the next\n",
+              "    // step of the generator.\n",
+              "    outputElement.lastPromiseValue = value;\n",
+              "    return next.value.response;\n",
+              "  });\n",
+              "}\n",
+              "\n",
+              "/**\n",
+              " * Generator function which is called between each async step of the upload\n",
+              " * process.\n",
+              " * @param {string} inputId Element ID of the input file picker element.\n",
+              " * @param {string} outputId Element ID of the output display.\n",
+              " * @return {!Iterable<!Object>} Iterable of next steps.\n",
+              " */\n",
+              "function* uploadFilesStep(inputId, outputId) {\n",
+              "  const inputElement = document.getElementById(inputId);\n",
+              "  inputElement.disabled = false;\n",
+              "\n",
+              "  const outputElement = document.getElementById(outputId);\n",
+              "  outputElement.innerHTML = '';\n",
+              "\n",
+              "  const pickedPromise = new Promise((resolve) => {\n",
+              "    inputElement.addEventListener('change', (e) => {\n",
+              "      resolve(e.target.files);\n",
+              "    });\n",
+              "  });\n",
+              "\n",
+              "  const cancel = document.createElement('button');\n",
+              "  inputElement.parentElement.appendChild(cancel);\n",
+              "  cancel.textContent = 'Cancel upload';\n",
+              "  const cancelPromise = new Promise((resolve) => {\n",
+              "    cancel.onclick = () => {\n",
+              "      resolve(null);\n",
+              "    };\n",
+              "  });\n",
+              "\n",
+              "  // Wait for the user to pick the files.\n",
+              "  const files = yield {\n",
+              "    promise: Promise.race([pickedPromise, cancelPromise]),\n",
+              "    response: {\n",
+              "      action: 'starting',\n",
+              "    }\n",
+              "  };\n",
+              "\n",
+              "  cancel.remove();\n",
+              "\n",
+              "  // Disable the input element since further picks are not allowed.\n",
+              "  inputElement.disabled = true;\n",
+              "\n",
+              "  if (!files) {\n",
+              "    return {\n",
+              "      response: {\n",
+              "        action: 'complete',\n",
+              "      }\n",
+              "    };\n",
+              "  }\n",
+              "\n",
+              "  for (const file of files) {\n",
+              "    const li = document.createElement('li');\n",
+              "    li.append(span(file.name, {fontWeight: 'bold'}));\n",
+              "    li.append(span(\n",
+              "        `(${file.type || 'n/a'}) - ${file.size} bytes, ` +\n",
+              "        `last modified: ${\n",
+              "            file.lastModifiedDate ? file.lastModifiedDate.toLocaleDateString() :\n",
+              "                                    'n/a'} - `));\n",
+              "    const percent = span('0% done');\n",
+              "    li.appendChild(percent);\n",
+              "\n",
+              "    outputElement.appendChild(li);\n",
+              "\n",
+              "    const fileDataPromise = new Promise((resolve) => {\n",
+              "      const reader = new FileReader();\n",
+              "      reader.onload = (e) => {\n",
+              "        resolve(e.target.result);\n",
+              "      };\n",
+              "      reader.readAsArrayBuffer(file);\n",
+              "    });\n",
+              "    // Wait for the data to be ready.\n",
+              "    let fileData = yield {\n",
+              "      promise: fileDataPromise,\n",
+              "      response: {\n",
+              "        action: 'continue',\n",
+              "      }\n",
+              "    };\n",
+              "\n",
+              "    // Use a chunked sending to avoid message size limits. See b/62115660.\n",
+              "    let position = 0;\n",
+              "    do {\n",
+              "      const length = Math.min(fileData.byteLength - position, MAX_PAYLOAD_SIZE);\n",
+              "      const chunk = new Uint8Array(fileData, position, length);\n",
+              "      position += length;\n",
+              "\n",
+              "      const base64 = btoa(String.fromCharCode.apply(null, chunk));\n",
+              "      yield {\n",
+              "        response: {\n",
+              "          action: 'append',\n",
+              "          file: file.name,\n",
+              "          data: base64,\n",
+              "        },\n",
+              "      };\n",
+              "\n",
+              "      let percentDone = fileData.byteLength === 0 ?\n",
+              "          100 :\n",
+              "          Math.round((position / fileData.byteLength) * 100);\n",
+              "      percent.textContent = `${percentDone}% done`;\n",
+              "\n",
+              "    } while (position < fileData.byteLength);\n",
+              "  }\n",
+              "\n",
+              "  // All done.\n",
+              "  yield {\n",
+              "    response: {\n",
+              "      action: 'complete',\n",
+              "    }\n",
+              "  };\n",
+              "}\n",
+              "\n",
+              "scope.google = scope.google || {};\n",
+              "scope.google.colab = scope.google.colab || {};\n",
+              "scope.google.colab._files = {\n",
+              "  _uploadFiles,\n",
+              "  _uploadFilesContinue,\n",
+              "};\n",
+              "})(self);\n",
+              "</script> "
+            ]
+          },
+          "metadata": {}
+        },
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Saving archive.zip to archive.zip\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import zipfile\n",
+        "\n",
+        "with zipfile.ZipFile(\"archive.zip\", 'r') as zip_ref:\n",
+        "    zip_ref.extractall(\"archive\")"
+      ],
+      "metadata": {
+        "id": "G_1l6qzADqVO"
+      },
+      "execution_count": 3,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "IMG_SIZE = (224, 224)\n",
+        "BATCH_SIZE = 32\n",
+        "\n",
+        "train_ds = image_dataset_from_directory(\n",
+        "    \"archive\",\n",
+        "    validation_split=0.2,\n",
+        "    subset=\"training\",\n",
+        "    seed=123,\n",
+        "    image_size=IMG_SIZE,\n",
+        "    batch_size=BATCH_SIZE\n",
+        ")\n",
+        "\n",
+        "val_ds = image_dataset_from_directory(\n",
+        "    \"archive\",\n",
+        "    validation_split=0.2,\n",
+        "    subset=\"validation\",\n",
+        "    seed=123,\n",
+        "    image_size=IMG_SIZE,\n",
+        "    batch_size=BATCH_SIZE\n",
+        ")\n",
+        "\n",
+        "class_names = train_ds.class_names\n",
+        "print(\"Classes:\", class_names)"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "90FmvaoyH4Al",
+        "outputId": "1829ce06-e6b7-49f2-cc55-1aefd9f8a387"
+      },
+      "execution_count": 46,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Found 3150 files belonging to 1 classes.\n",
+            "Using 2520 files for training.\n",
+            "Found 3150 files belonging to 1 classes.\n",
+            "Using 630 files for validation.\n",
+            "Classes: ['pest']\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "base_model = MobileNetV2(\n",
+        "    input_shape=(224, 224, 3),\n",
+        "    include_top=False,\n",
+        "    weights=\"imagenet\"\n",
+        ")\n",
+        "\n",
+        "base_model.trainable = False  # Freeze base model"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "IPjRFUEHIWH8",
+        "outputId": "96d6b1f3-1959-405f-cd48-bf74609cc912"
+      },
+      "execution_count": 47,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Downloading data from https://storage.googleapis.com/tensorflow/keras-applications/mobilenet_v2/mobilenet_v2_weights_tf_dim_ordering_tf_kernels_1.0_224_no_top.h5\n",
+            "\u001b[1m9406464/9406464\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m0s\u001b[0m 0us/step\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "model = models.Sequential([\n",
+        "    layers.Rescaling(1./255),\n",
+        "    base_model,\n",
+        "    layers.GlobalAveragePooling2D(),\n",
+        "    layers.Dense(128, activation='relu'),\n",
+        "    layers.Dropout(0.3),\n",
+        "    layers.Dense(len(class_names), activation='softmax')\n",
+        "])"
+      ],
+      "metadata": {
+        "id": "BQcXZrGPIZAu"
+      },
+      "execution_count": 48,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "model.compile(\n",
+        "    optimizer='adam',\n",
+        "    loss='sparse_categorical_crossentropy',\n",
+        "    metrics=['accuracy']\n",
+        ")"
+      ],
+      "metadata": {
+        "id": "Ui8FpV1fIcAV"
+      },
+      "execution_count": 49,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "history = model.fit(\n",
+        "    train_ds,\n",
+        "    validation_data=val_ds,\n",
+        "    epochs=10\n",
+        ")"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "kWA18O-JIgw1",
+        "outputId": "48479f4f-238d-40d8-ae85-ed314d97c4f6"
+      },
+      "execution_count": 50,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Epoch 1/10\n"
+          ]
+        },
+        {
+          "output_type": "stream",
+          "name": "stderr",
+          "text": [
+            "/usr/local/lib/python3.12/dist-packages/keras/src/ops/nn.py:944: UserWarning: You are using a softmax over axis -1 of a tensor of shape (None, 1). This axis has size 1. The softmax operation will always return the value 1, which is likely not what you intended. Did you mean to use a sigmoid instead?\n",
+            "  warnings.warn(\n"
+          ]
+        },
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "\u001b[1m79/79\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m147s\u001b[0m 2s/step - accuracy: 0.0000e+00 - loss: 0.0000e+00 - val_accuracy: 0.0000e+00 - val_loss: 0.0000e+00\n",
+            "Epoch 2/10\n",
+            "\u001b[1m79/79\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m134s\u001b[0m 2s/step - accuracy: 0.0000e+00 - loss: 0.0000e+00 - val_accuracy: 0.0000e+00 - val_loss: 0.0000e+00\n",
+            "Epoch 3/10\n",
+            "\u001b[1m79/79\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m156s\u001b[0m 2s/step - accuracy: 0.0000e+00 - loss: 0.0000e+00 - val_accuracy: 0.0000e+00 - val_loss: 0.0000e+00\n",
+            "Epoch 4/10\n",
+            "\u001b[1m79/79\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m163s\u001b[0m 2s/step - accuracy: 0.0000e+00 - loss: 0.0000e+00 - val_accuracy: 0.0000e+00 - val_loss: 0.0000e+00\n",
+            "Epoch 5/10\n",
+            "\u001b[1m79/79\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m138s\u001b[0m 2s/step - accuracy: 0.0000e+00 - loss: 0.0000e+00 - val_accuracy: 0.0000e+00 - val_loss: 0.0000e+00\n",
+            "Epoch 6/10\n",
+            "\u001b[1m79/79\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m152s\u001b[0m 2s/step - accuracy: 0.0000e+00 - loss: 0.0000e+00 - val_accuracy: 0.0000e+00 - val_loss: 0.0000e+00\n",
+            "Epoch 7/10\n",
+            "\u001b[1m79/79\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m153s\u001b[0m 2s/step - accuracy: 0.0000e+00 - loss: 0.0000e+00 - val_accuracy: 0.0000e+00 - val_loss: 0.0000e+00\n",
+            "Epoch 8/10\n",
+            "\u001b[1m79/79\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m164s\u001b[0m 2s/step - accuracy: 0.0000e+00 - loss: 0.0000e+00 - val_accuracy: 0.0000e+00 - val_loss: 0.0000e+00\n",
+            "Epoch 9/10\n",
+            "\u001b[1m79/79\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m173s\u001b[0m 2s/step - accuracy: 0.0000e+00 - loss: 0.0000e+00 - val_accuracy: 0.0000e+00 - val_loss: 0.0000e+00\n",
+            "Epoch 10/10\n",
+            "\u001b[1m79/79\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m143s\u001b[0m 2s/step - accuracy: 0.0000e+00 - loss: 0.0000e+00 - val_accuracy: 0.0000e+00 - val_loss: 0.0000e+00\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "plt.plot(history.history['accuracy'], label='Training Accuracy')\n",
+        "plt.plot(history.history['val_accuracy'], label='Validation Accuracy')\n",
+        "plt.legend()\n",
+        "plt.title(\"Model Accuracy\")\n",
+        "plt.show()"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 452
+        },
+        "id": "8HilqdGlNRjD",
+        "outputId": "b14515c1-23d4-44ed-c0ae-2be12c167042"
+      },
+      "execution_count": 51,
+      "outputs": [
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": [
+              "<Figure size 640x480 with 1 Axes>"
+            ],
+            "image/png": "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HTp0SK1bt5a3t7fKlCmjunXras2aNTbb/fNpKYvFov/93//Viy++qFKlSsnf318rVqywLv/zaam5c+fK09NTq1evVkBAgMqUKaNmzZrp1KlT1nWuXbumV155RZ6enipfvryGDRumHj16qE2bNrc87lmzZqlz587q1q2bZs+efdPy48ePKyIiQuXKlVPp0qUVEhKirVu3Wpd/9dVXqlu3rlxcXFShQgW9+OKLNse6fPlym+15enpq7ty5kqTffvtNFotFixYtUqNGjeTi4qLY2FidO3dOERERqly5skqVKqXAwEAtWLDAZju5ubl6//339fDDD8vZ2VlVqlTRuHHjJElNmjRRVFSUTf8zZ87IyclJCQkJt/xM7iXucwMAxdSV7Bw9Nnq1Xfb981vhKuV0d35Chg8frkmTJqlGjRoqW7asjh07phYtWmjcuHFydnbWvHnz1KpVK+3fv19VqlTJdztvvvmm3n//fU2cOFEfffSRunTpoiNHjqhcuXJ59r98+bImTZqkzz77TA4ODuratauGDh2q2NhYSdJ7772n2NhYzZkzRwEBAZo6daqWL1+u5557rsDjuXjxopYsWaKtW7eqVq1aSktL04YNG/TMM89Iki5duqRGjRqpcuXKWrFihXx8fLRz507l5uZKkr7++mu9+OKLGjlypObNm6esrCx98803d/S5Tp48WU8++aRcXFx09epVBQcHa9iwYXJ3d9fXX3+tbt26qWbNmqpXr54kacSIEfr000/14Ycf6m9/+5tOnTqlffv2SZL69OmjqKgoTZ48Wc7OzpKk+fPnq3LlymrSpMlt11eUCDcAALt666239Pe//936vly5cqpTp471/dtvv61ly5ZpxYoVN40c/FHPnj0VEREhSRo/frymTZumbdu2qVmzZnn2z87O1owZM1SzZk1JUlRUlN566y3r8o8++kgjRoywjprExMQUKmQsXLhQ/v7+ql27tiSpU6dOmjVrljXcxMXF6cyZM0pKSrIGr4cffti6/rhx49SpUye9+eab1rY/fh6FNWjQIL300ks2bX88DThgwACtXr1aixcvVr169XTx4kVNnTpVMTEx6tGjhySpZs2a+tvf/iZJeumllxQVFaUvv/xSHTp0kHR9BKxnz5733d2yCTcAUEy5lnTUz2+F223fd0tISIjN+0uXLmns2LH6+uuvderUKV27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66xdu1Y//fSTPv/8c0nSjelCFSpU0MiRI/Xmm2/muW1nZ2c5OzsX5hABAEAxd1vhxsvLS15eXrfs16BBA124cEE7duxQcHCwpOvBJDc3V6GhoXmuExwcrJIlSyohIUFt27aVJO3fv19Hjx5VgwYNJElLly7VlStXrOskJSWpd+/e2rBhg2rWrHk7hwIAAEzqtsJNYQUEBKhZs2bq27evZsyYoezsbEVFRalTp07WK6VOnDihpk2bat68eapXr548PDwUGRmp6OholStXTu7u7howYIAaNGhgvVLqzwHm7Nmz1v3dztVSAADAvIok3EhSbGysoqKi1LRpUzk4OKht27aaNm2adXl2drb279+vy5cvW9s+/PBDa9/MzEyFh4frk08+KaoSAQCACRXJfW7ud9znBgCA4seu97kBAACwF8INAAAwFcINAAAwFcINAAAwFcINAAAwFcINAAAwFcINAAAwFcINAAAwFcINAAAwFcINAAAwFcINAAAwFcINAAAwFcINAAAwFcINAAAwFcINAAAwFcINAAAwFcINAAAwFcINAAAwFcINAAAwFcINAAAwFcINAAAwFcINAAAwFcINAAAwFcINAAAwFcINAAAwFcINAAAwFcINAAAwFcINAAAwFcINAAAwFcINAAAwFcINAAAwFcINAAAwFcINAAAwFcINAAAwFcINAAAwFcINAAAwFcINAAAwFcINAAAwFcINAAAwFcINAAAwFcINAAAwFcINAAAwlRL2LsAeDMOQJKWnp9u5EgAAUFg3frdv/I7n54EMNxcvXpQk+fn52bkSAABwuy5evCgPD498l1uMW8UfE8rNzdXJkyfl5uYmi8VyV7ednp4uPz8/HTt2TO7u7nd127h9fB/3F76P+wvfx/2F7+PWDMPQxYsX5evrKweH/GfWPJAjNw4ODnrooYeKdB/u7u785byP8H3cX/g+7i98H/cXvo+CFTRicwMTigEAgKkQbgAAgKkQbu4yZ2dnjRkzRs7OzvYuBeL7uN/wfdxf+D7uL3wfd88DOaEYAACYFyM3AADAVAg3AADAVAg3AADAVAg3AADAVAg3AADAVAg3d9HHH3+satWqycXFRaGhodq2bZu9S3ogTZgwQXXr1pWbm5sqVqyoNm3aaP/+/fYuC//fu+++K4vFokGDBtm7lAfaiRMn1LVrV5UvX16urq4KDAzU9u3b7V3WAyknJ0dvvPGGqlevLldXV9WsWVNvv/32LR8OifwRbu6SRYsWKTo6WmPGjNHOnTtVp04dhYeH6/Tp0/Yu7YGzfv169e/fX1u2bFF8fLyys7P1j3/8QxkZGfYu7YGXlJSkf//733riiSfsXcoD7ffff9fTTz+tkiVL6ttvv9XPP/+syZMnq2zZsvYu7YH03nvvafr06YqJidHevXv13nvv6f3339dHH31k79KKLe5zc5eEhoaqbt26iomJkXT94Zx+fn4aMGCAhg8fbufqHmxnzpxRxYoVtX79ej377LP2LueBdenSJT311FP65JNP9M477ygoKEhTpkyxd1kPpOHDh2vTpk3asGGDvUuBpOeff17e3t6aNWuWta1t27ZydXXV/Pnz7VhZ8cXIzV2QlZWlHTt2KCwszNrm4OCgsLAwJSYm2rEySFJaWpokqVy5cnau5MHWv39/tWzZ0ub/E9jHihUrFBISovbt26tixYp68skn9emnn9q7rAdWw4YNlZCQoF9++UWStGvXLm3cuFHNmze3c2XF1wP5VPC77ezZs8rJyZG3t7dNu7e3t/bt22enqiBdH0EbNGiQnn76aT3++OP2LueBtXDhQu3cuVNJSUn2LgWSfv31V02fPl3R0dF6/fXXlZSUpFdeeUVOTk7q0aOHvct74AwfPlzp6emqVauWHB0dlZOTo3HjxqlLly72Lq3YItzA1Pr376/du3dr48aN9i7lgXXs2DENHDhQ8fHxcnFxsXc50PXQHxISovHjx0uSnnzySe3evVszZswg3NjB4sWLFRsbq7i4ONWuXVvJyckaNGiQfH19+T7uEOHmLqhQoYIcHR2Vmppq056amiofHx87VYWoqCitXLlSP/zwgx566CF7l/PA2rFjh06fPq2nnnrK2paTk6MffvhBMTExyszMlKOjox0rfPBUqlRJjz32mE1bQECAli5daqeKHmyvvvqqhg8frk6dOkmSAgMDdeTIEU2YMIFwc4eYc3MXODk5KTg4WAkJCda23NxcJSQkqEGDBnas7MFkGIaioqK0bNkyrV27VtWrV7d3SQ+0pk2b6qefflJycrL1FRISoi5duig5OZlgYwdPP/30TbdH+OWXX1S1alU7VfRgu3z5shwcbH+OHR0dlZuba6eKij9Gbu6S6Oho9ejRQyEhIapXr56mTJmijIwM9erVy96lPXD69++vuLg4ffnll3Jzc1NKSookycPDQ66urnau7sHj5uZ203yn0qVLq3z58syDspPBgwerYcOGGj9+vDp06KBt27Zp5syZmjlzpr1LeyC1atVK48aNU5UqVVS7dm39+OOP+uCDD9S7d297l1ZscSn4XRQTE6OJEycqJSVFQUFBmjZtmkJDQ+1d1gPHYrHk2T5nzhz17Nnz3haDPDVu3JhLwe1s5cqVGjFihA4cOKDq1asrOjpaffv2tXdZD6SLFy/qjTfe0LJly3T69Gn5+voqIiJCo0ePlpOTk73LK5YINwAAwFSYcwMAAEyFcAMAAEyFcAMAAEyFcAMAAEyFcAMAAEyFcAMAAEyFcAMAAEyFcAMAAEyFcAMAAEyFcAMAAEyFcAMAAEzl/wF7aYXTytDZ2wAAAABJRU5ErkJggg==\n"
+          },
+          "metadata": {}
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "uploaded = files.upload()"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 73
+        },
+        "id": "6-a4paLCObMT",
+        "outputId": "d55ba45c-30af-4c59-8b83-a9044c15a2f5"
+      },
+      "execution_count": 52,
+      "outputs": [
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": [
+              "<IPython.core.display.HTML object>"
+            ],
+            "text/html": [
+              "\n",
+              "     <input type=\"file\" id=\"files-0f3a9a41-3025-4301-b593-afdd0394b898\" name=\"files[]\" multiple disabled\n",
+              "        style=\"border:none\" />\n",
+              "     <output id=\"result-0f3a9a41-3025-4301-b593-afdd0394b898\">\n",
+              "      Upload widget is only available when the cell has been executed in the\n",
+              "      current browser session. Please rerun this cell to enable.\n",
+              "      </output>\n",
+              "      <script>// Copyright 2017 Google LLC\n",
+              "//\n",
+              "// Licensed under the Apache License, Version 2.0 (the \"License\");\n",
+              "// you may not use this file except in compliance with the License.\n",
+              "// You may obtain a copy of the License at\n",
+              "//\n",
+              "//      http://www.apache.org/licenses/LICENSE-2.0\n",
+              "//\n",
+              "// Unless required by applicable law or agreed to in writing, software\n",
+              "// distributed under the License is distributed on an \"AS IS\" BASIS,\n",
+              "// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n",
+              "// See the License for the specific language governing permissions and\n",
+              "// limitations under the License.\n",
+              "\n",
+              "/**\n",
+              " * @fileoverview Helpers for google.colab Python module.\n",
+              " */\n",
+              "(function(scope) {\n",
+              "function span(text, styleAttributes = {}) {\n",
+              "  const element = document.createElement('span');\n",
+              "  element.textContent = text;\n",
+              "  for (const key of Object.keys(styleAttributes)) {\n",
+              "    element.style[key] = styleAttributes[key];\n",
+              "  }\n",
+              "  return element;\n",
+              "}\n",
+              "\n",
+              "// Max number of bytes which will be uploaded at a time.\n",
+              "const MAX_PAYLOAD_SIZE = 100 * 1024;\n",
+              "\n",
+              "function _uploadFiles(inputId, outputId) {\n",
+              "  const steps = uploadFilesStep(inputId, outputId);\n",
+              "  const outputElement = document.getElementById(outputId);\n",
+              "  // Cache steps on the outputElement to make it available for the next call\n",
+              "  // to uploadFilesContinue from Python.\n",
+              "  outputElement.steps = steps;\n",
+              "\n",
+              "  return _uploadFilesContinue(outputId);\n",
+              "}\n",
+              "\n",
+              "// This is roughly an async generator (not supported in the browser yet),\n",
+              "// where there are multiple asynchronous steps and the Python side is going\n",
+              "// to poll for completion of each step.\n",
+              "// This uses a Promise to block the python side on completion of each step,\n",
+              "// then passes the result of the previous step as the input to the next step.\n",
+              "function _uploadFilesContinue(outputId) {\n",
+              "  const outputElement = document.getElementById(outputId);\n",
+              "  const steps = outputElement.steps;\n",
+              "\n",
+              "  const next = steps.next(outputElement.lastPromiseValue);\n",
+              "  return Promise.resolve(next.value.promise).then((value) => {\n",
+              "    // Cache the last promise value to make it available to the next\n",
+              "    // step of the generator.\n",
+              "    outputElement.lastPromiseValue = value;\n",
+              "    return next.value.response;\n",
+              "  });\n",
+              "}\n",
+              "\n",
+              "/**\n",
+              " * Generator function which is called between each async step of the upload\n",
+              " * process.\n",
+              " * @param {string} inputId Element ID of the input file picker element.\n",
+              " * @param {string} outputId Element ID of the output display.\n",
+              " * @return {!Iterable<!Object>} Iterable of next steps.\n",
+              " */\n",
+              "function* uploadFilesStep(inputId, outputId) {\n",
+              "  const inputElement = document.getElementById(inputId);\n",
+              "  inputElement.disabled = false;\n",
+              "\n",
+              "  const outputElement = document.getElementById(outputId);\n",
+              "  outputElement.innerHTML = '';\n",
+              "\n",
+              "  const pickedPromise = new Promise((resolve) => {\n",
+              "    inputElement.addEventListener('change', (e) => {\n",
+              "      resolve(e.target.files);\n",
+              "    });\n",
+              "  });\n",
+              "\n",
+              "  const cancel = document.createElement('button');\n",
+              "  inputElement.parentElement.appendChild(cancel);\n",
+              "  cancel.textContent = 'Cancel upload';\n",
+              "  const cancelPromise = new Promise((resolve) => {\n",
+              "    cancel.onclick = () => {\n",
+              "      resolve(null);\n",
+              "    };\n",
+              "  });\n",
+              "\n",
+              "  // Wait for the user to pick the files.\n",
+              "  const files = yield {\n",
+              "    promise: Promise.race([pickedPromise, cancelPromise]),\n",
+              "    response: {\n",
+              "      action: 'starting',\n",
+              "    }\n",
+              "  };\n",
+              "\n",
+              "  cancel.remove();\n",
+              "\n",
+              "  // Disable the input element since further picks are not allowed.\n",
+              "  inputElement.disabled = true;\n",
+              "\n",
+              "  if (!files) {\n",
+              "    return {\n",
+              "      response: {\n",
+              "        action: 'complete',\n",
+              "      }\n",
+              "    };\n",
+              "  }\n",
+              "\n",
+              "  for (const file of files) {\n",
+              "    const li = document.createElement('li');\n",
+              "    li.append(span(file.name, {fontWeight: 'bold'}));\n",
+              "    li.append(span(\n",
+              "        `(${file.type || 'n/a'}) - ${file.size} bytes, ` +\n",
+              "        `last modified: ${\n",
+              "            file.lastModifiedDate ? file.lastModifiedDate.toLocaleDateString() :\n",
+              "                                    'n/a'} - `));\n",
+              "    const percent = span('0% done');\n",
+              "    li.appendChild(percent);\n",
+              "\n",
+              "    outputElement.appendChild(li);\n",
+              "\n",
+              "    const fileDataPromise = new Promise((resolve) => {\n",
+              "      const reader = new FileReader();\n",
+              "      reader.onload = (e) => {\n",
+              "        resolve(e.target.result);\n",
+              "      };\n",
+              "      reader.readAsArrayBuffer(file);\n",
+              "    });\n",
+              "    // Wait for the data to be ready.\n",
+              "    let fileData = yield {\n",
+              "      promise: fileDataPromise,\n",
+              "      response: {\n",
+              "        action: 'continue',\n",
+              "      }\n",
+              "    };\n",
+              "\n",
+              "    // Use a chunked sending to avoid message size limits. See b/62115660.\n",
+              "    let position = 0;\n",
+              "    do {\n",
+              "      const length = Math.min(fileData.byteLength - position, MAX_PAYLOAD_SIZE);\n",
+              "      const chunk = new Uint8Array(fileData, position, length);\n",
+              "      position += length;\n",
+              "\n",
+              "      const base64 = btoa(String.fromCharCode.apply(null, chunk));\n",
+              "      yield {\n",
+              "        response: {\n",
+              "          action: 'append',\n",
+              "          file: file.name,\n",
+              "          data: base64,\n",
+              "        },\n",
+              "      };\n",
+              "\n",
+              "      let percentDone = fileData.byteLength === 0 ?\n",
+              "          100 :\n",
+              "          Math.round((position / fileData.byteLength) * 100);\n",
+              "      percent.textContent = `${percentDone}% done`;\n",
+              "\n",
+              "    } while (position < fileData.byteLength);\n",
+              "  }\n",
+              "\n",
+              "  // All done.\n",
+              "  yield {\n",
+              "    response: {\n",
+              "      action: 'complete',\n",
+              "    }\n",
+              "  };\n",
+              "}\n",
+              "\n",
+              "scope.google = scope.google || {};\n",
+              "scope.google.colab = scope.google.colab || {};\n",
+              "scope.google.colab._files = {\n",
+              "  _uploadFiles,\n",
+              "  _uploadFilesContinue,\n",
+              "};\n",
+              "})(self);\n",
+              "</script> "
+            ]
+          },
+          "metadata": {}
+        },
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Saving armyworm-1.jpg to armyworm-1.jpg\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "img = tf.keras.utils.load_img(\"armyworm-1.jpg\", target_size=(224,224))\n",
+        "img_array = tf.keras.utils.img_to_array(img)\n",
+        "img_array = np.expand_dims(img_array, axis=0)\n",
+        "\n",
+        "prediction = model.predict(img_array)\n",
+        "score = tf.nn.softmax(prediction[0])\n",
+        "\n",
+        "print(\"Predicted Pest:\", class_names[np.argmax(score)])\n",
+        "print(\"Confidence:\", 100 * np.max(score), \"%\")"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "AxD9CgHlOftz",
+        "outputId": "f31344bc-3ff9-4380-8fed-3606b6ebf092"
+      },
+      "execution_count": 53,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stderr",
+          "text": [
+            "/usr/local/lib/python3.12/dist-packages/keras/src/ops/nn.py:944: UserWarning: You are using a softmax over axis -1 of a tensor of shape (1, 1). This axis has size 1. The softmax operation will always return the value 1, which is likely not what you intended. Did you mean to use a sigmoid instead?\n",
+            "  warnings.warn(\n"
+          ]
+        },
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "\u001b[1m1/1\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m1s\u001b[0m 1s/step\n",
+            "Predicted Pest: pest\n",
+            "Confidence: 100.0 %\n"
+          ]
+        }
+      ]
+    }
+  ]
+}
